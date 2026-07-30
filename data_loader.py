@@ -1,6 +1,51 @@
 import pandas as pd
 from pathlib import Path
 
+
+def load_classlesson_excel(
+    input_file: str,
+    output_file: str = None,
+    sheet_names: list = None
+) -> pd.DataFrame:
+    """
+    读取 classlesson Excel，不添加“数据分类”列。
+
+    若读取多个 Sheet，则直接按行合并，不额外添加 Sheet 来源标签，
+    也不对课次记录去重。
+
+    Parameters
+    ----------
+    input_file : str
+        输入 Excel 文件路径。
+    output_file : str, optional
+        输出 Excel 文件路径，若不提供则不保存。
+    sheet_names : list, optional
+        要处理的 Sheet 名称列表，默认读取全部 Sheet。
+
+    Returns
+    -------
+    pd.DataFrame
+        合并后的 classlesson DataFrame。
+    """
+    excel_data = pd.read_excel(
+        input_file,
+        sheet_name=sheet_names,
+        header=0,
+    )
+
+    if isinstance(excel_data, pd.DataFrame):
+        result = excel_data.copy()
+    else:
+        result = pd.concat(excel_data.values(), ignore_index=True)
+
+    if output_file:
+        Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+        result.to_excel(output_file, index=False)
+        print(f"已保存 classlesson 读取结果至：{output_file}")
+
+    return result
+
+
 def merge_and_deduplicate_excel(
     input_file: str,
     output_file: str = None,

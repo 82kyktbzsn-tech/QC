@@ -10,6 +10,60 @@ HUNAN_CITIES = [
 ]
 COVER_KEYWORDS = HUNAN_CITIES + ['省域网络']   # 匹配任意一个即覆盖
 
+
+def apply_classlesson_standard_department(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    根据 classlesson 字段生成“标化部门”，并放在第一列。
+
+    字段映射：
+      - 标准部门名称：对应 classinfo 的“标准部门”
+      - 科目名称：对应 classinfo 的“科目(原)”
+      - 教学区名称：对应 classinfo 的“校区名称”
+    """
+    result = df.copy()
+
+    for col in ['标准部门名称', '科目名称', '教学区名称']:
+        result[col] = result[col].astype('string').str.strip()
+
+    department = result['标准部门名称']
+    subject = result['科目名称']
+    teaching_area = result['教学区名称']
+    result['标化部门'] = ''
+
+    result.loc[department == '高中班级部', '标化部门'] = '高中班级部'
+    result.loc[department == '国外考试部', '标化部门'] = '国外考试部'
+
+    suyang_department = department == '素养智学部'
+    result.loc[suyang_department, '标化部门'] = '小学学习机'
+
+    suyang_subjects = {'博文妙笔', '脑力与思维', '书法', '双语故事表演'}
+    suzhi_subjects = {'编程', '机器人', '科创', '围棋'}
+    result.loc[
+        suyang_department & subject.isin(suyang_subjects),
+        '标化部门',
+    ] = '素养'
+    result.loc[
+        suyang_department & subject.isin(suzhi_subjects),
+        '标化部门',
+    ] = '素质'
+
+    result.loc[department == '智慧学习部', '标化部门'] = '中学学习机'
+
+    pattern = '|'.join(COVER_KEYWORDS)
+    innovation_area = teaching_area.str.contains(
+        pattern,
+        case=False,
+        na=False,
+        regex=True,
+    )
+    result.loc[innovation_area, '标化部门'] = '创新'
+
+    columns = ['标化部门'] + [
+        col for col in result.columns if col != '标化部门'
+    ]
+    return result[columns]
+
+
 def apply_standard_department(df: pd.DataFrame) -> pd.DataFrame:
     """
     根据规则为 DataFrame 添加“标化部门”列，并确保其位于第二列。
