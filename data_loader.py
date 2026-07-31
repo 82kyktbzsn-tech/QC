@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import warnings
 
 
 def load_classlesson_excel(
@@ -27,11 +28,18 @@ def load_classlesson_excel(
     pd.DataFrame
         合并后的 classlesson DataFrame。
     """
-    excel_data = pd.read_excel(
-        input_file,
-        sheet_name=sheet_names,
-        header=0,
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            message='Workbook contains no default style.*',
+            category=UserWarning,
+            module='openpyxl.styles.stylesheet',
+        )
+        excel_data = pd.read_excel(
+            input_file,
+            sheet_name=sheet_names,
+            header=0,
+        )
 
     if isinstance(excel_data, pd.DataFrame):
         result = excel_data.copy()

@@ -1,4 +1,8 @@
-from classlesson_qc import check_abnormal_schedule_time
+from classlesson_qc import (
+    check_abnormal_attendance,
+    check_abnormal_schedule_time,
+    check_zero_student_class,
+)
 from data_loader import load_classlesson_excel
 from labeling import apply_classlesson_standard_department
 
@@ -7,6 +11,8 @@ def main():
     df = load_classlesson_excel("data/classlesson.xlsx")
     result = apply_classlesson_standard_department(df)
     result = check_abnormal_schedule_time(result)
+    result = check_abnormal_attendance(result)
+    result = check_zero_student_class(result)
 
     output_path = "output/classlesson_labeled.xlsx"
     result.to_excel(output_path, index=False)
@@ -15,6 +21,9 @@ def main():
     print("标化部门分布：")
     print(result['标化部门'].value_counts(dropna=False).to_string())
     print(f"异常时间排课行数：{result['异常时间排课'].sum()} 行")
+    print(f"教师考勤异常行数：{result['教师考勤异常'].sum()} 行")
+    print(f"学员考勤异常行数：{result['学员考勤异常'].sum()} 行")
+    print(f"0人班处理行数：{result['0人班处理'].sum()} 行")
     print(f"标化完成，结果已保存至 {output_path}")
 
 
