@@ -3,8 +3,9 @@ import pandas as pd
 
 def check_renewal_type(df: pd.DataFrame) -> pd.DataFrame:
     """
-    根据产品体系、续班类型、年级(原) 检测续班类型是否异常。
+    根据标准部门、产品体系、续班类型、年级(原) 检测续班类型是否异常。
     规则：
+      - 标准部门为'国外考试部'：不纳入质检，标注0
       - 出口年级（含“高三/初三/六年级/中考/高考”等关键词）：续班类型必须为 '不可续'，否则异常
       - 常规体系产品：续班类型必须为 '可续' 或 '连季续'，否则异常
       - 专项体系产品：续班类型必须为 '不可续'，否则异常
@@ -12,14 +13,14 @@ def check_renewal_type(df: pd.DataFrame) -> pd.DataFrame:
       - 其他产品体系：视为异常（保守处理）
 
     参数:
-        df: 需包含列 '产品体系', '续班类型', '年级(原)'
+        df: 需包含列 '标准部门', '产品体系', '续班类型', '年级(原)'
 
     返回:
         添加 '续班类型异常' 列（int，1表示异常，0表示正常）的DataFrame
     """
     result = df.copy()
     # 预处理字符串列：去除首尾空格
-    for col in ['产品体系', '续班类型', '年级(原)']:
+    for col in ['标准部门', '产品体系', '续班类型', '年级(原)']:
         if col in result.columns:
             result[col] = result[col].astype(str).str.strip()
 
@@ -32,7 +33,14 @@ def check_renewal_type(df: pd.DataFrame) -> pd.DataFrame:
     regular_systems = ['常规体系','A体系','B体系']
     # 构建正则表达式，实现“包含任一关键词”的模糊匹配（忽略大小写）
     pattern = '|'.join(exit_grades)
-    mask_exit = result['年级(原)'].str.contains(pattern, case=False, na=False, regex=True)
+    in_scope = result['标准部门'] != '国外考试部'
+    is_exit_grade = result['年级(原)'].str.contains(
+        pattern,
+        case=False,
+        na=False,
+        regex=True,
+    )
+    mask_exit = in_scope & is_exit_grade
     # ---------- 修改点（结束） ----------
 
     # 1. 出口年级：若年级(原) 包含关键词，且 续班类型 != '不可续' → 异常
@@ -40,7 +48,7 @@ def check_renewal_type(df: pd.DataFrame) -> pd.DataFrame:
     result.loc[mask_exit_abnormal, '续班类型异常'] = 1
 
     # 2. 非出口年级，按产品体系判断
-    not_exit = ~mask_exit
+    not_exit = in_scope & ~is_exit_grade
 
     # 2.1 常规体系：续班类型 in ['可续','连季续'] 为正常，否则异常
     mask_regular = (result['产品体系'].isin(regular_systems)) & not_exit
