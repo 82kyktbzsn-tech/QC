@@ -12,8 +12,10 @@ from qc import (
     check_class_location_and_room,
     check_class_price,
     check_class_setup_date,
+    check_class_type,
     check_external_class_time,
     check_learning_device_online_settings,
+    check_management_project_class_name,
     check_minimum_and_opening_students,
     check_minimum_payroll_department,
     check_quarter_start_date,
@@ -86,10 +88,16 @@ def main():
     # 第二十步：开班人数、保底人数检测
     df_checked = check_minimum_and_opening_students(df_checked)
 
+    # 第二十一步：班级类型检测
+    df_checked = check_class_type(df_checked)
+
+    # 第二十二步：管理项目与班级名称匹配检测
+    df_checked = check_management_project_class_name(df_checked)
+
     # 统计异常数量
     renewal_abnormal_count = df_checked['续班类型异常'].sum()
     class_price_abnormal_count = df_checked['班级标价规范'].sum()
-    teacher_abnormal_count = df_checked['主带课教师异常'].sum()
+    teacher_abnormal_count = df_checked['未设置主带课教师'].sum()
     related_class_abnormal_count = df_checked['关联班号异常'].sum()
     audit_status_abnormal_count = df_checked['审核状态异常'].sum()
     quarter_start_date_abnormal_count = df_checked['季度与开课日期不符'].sum()
@@ -109,7 +117,7 @@ def main():
         df_checked['封班检查'] == '0人班未封班'
     ).sum()
     billing_class_count_duration_abnormal_count = (
-        df_checked['封班检查'] == '计费体系课次时长异常'
+        df_checked['封班检查'] == '计费体系不为1次课1分钟（需确认）'
     ).sum()
     minimum_payroll_department_abnormal_count = (
         df_checked['最小发薪部门为空'].sum()
@@ -125,9 +133,13 @@ def main():
         df_checked['学习机线上班级设置规范'].sum()
     )
     minimum_opening_students_abnormal_count = df_checked['开班保底人数'].sum()
+    class_type_abnormal_count = df_checked['班级类型错误'].sum()
+    management_project_class_name_abnormal_count = (
+        df_checked['疑似非本管理项目下班级'].sum()
+    )
     print(f"续班类型异常行数：{renewal_abnormal_count} 行")
     print(f"班级标价规范异常行数：{class_price_abnormal_count} 行")
-    print(f"主带课教师异常行数：{teacher_abnormal_count} 行")
+    print(f"未设置主带课教师行数：{teacher_abnormal_count} 行")
     print(f"关联班号异常行数：{related_class_abnormal_count} 行")
     print(f"审核状态异常行数：{audit_status_abnormal_count} 行")
     print(f"季度与开课日期不符行数：{quarter_start_date_abnormal_count} 行")
@@ -145,7 +157,7 @@ def main():
     print(f"教材发放形式填写错误行数：{textbook_distribution_abnormal_count} 行")
     print(f"0人班未封班行数：{zero_student_unclosed_count} 行")
     print(
-        "计费体系课次时长异常行数："
+        "计费体系不为1次课1分钟（需确认）行数："
         f"{billing_class_count_duration_abnormal_count} 行"
     )
     print(
@@ -166,6 +178,11 @@ def main():
         f"{learning_device_online_settings_abnormal_count} 行"
     )
     print(f"开班保底人数异常行数：{minimum_opening_students_abnormal_count} 行")
+    print(f"班级类型错误行数：{class_type_abnormal_count} 行")
+    print(
+        "疑似非本管理项目下班级行数："
+        f"{management_project_class_name_abnormal_count} 行"
+    )
 
     # 保存最终结果
     output_path = "output/final_result.xlsx"

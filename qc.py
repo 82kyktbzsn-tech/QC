@@ -1,26 +1,39 @@
 # quality_checks.py
+import re
+
 import pandas as pd
 
 def check_renewal_type(df: pd.DataFrame) -> pd.DataFrame:
     """
-    根据标准部门、产品体系、续班类型、年级(原) 检测续班类型是否异常。
+    根据标准部门、班级状态、产品体系、续班类型、年级(原)、季度检测续班类型是否异常。
     规则：
+      - 仅检查设班日期不早于2026-08-01的班级
       - 标准部门为'国外考试部'：不纳入质检，标注0
-      - 出口年级（含“高三/初三/六年级/中考/高考”等关键词）：续班类型必须为 '不可续'，否则异常
-      - 常规体系产品：续班类型必须为 '可续' 或 '连季续'，否则异常
-      - 专项体系产品：续班类型必须为 '不可续'，否则异常
-      - 计费体系产品：续班类型无限制（可为空），不判异常
-      - 其他产品体系：视为异常（保守处理）
+      - 班级状态为'取消班'：不纳入质检，标注0
+      - 产品体系包含'计费'：不纳入续班类型质检，标注0
+      - 季度包含'春'且为出口年级（含“高三/初三/六年级/中考/高考”等关键词）：
+        续班类型必须为'不可续'，否则异常
+      - 产品体系包含'专项'：续班类型必须为 '不可续'，否则异常
+      - 产品体系既不包含'计费'也不包含'专项'：按常规体系处理，
+        续班类型必须为 '可续' 或 '连季续'，否则异常
 
     参数:
-        df: 需包含列 '标准部门', '产品体系', '续班类型', '年级(原)'
+        df: 需包含列 '标准部门', '班级状态', '产品体系', '续班类型',
+            '年级(原)', '季度', '设班日期'
 
     返回:
         添加 '续班类型异常' 列（int，1表示异常，0表示正常）的DataFrame
     """
     result = df.copy()
     # 预处理字符串列：去除首尾空格
-    for col in ['标准部门', '产品体系', '续班类型', '年级(原)']:
+    for col in [
+        '标准部门',
+        '班级状态',
+        '产品体系',
+        '续班类型',
+        '年级(原)',
+        '季度',
+    ]:
         if col in result.columns:
             result[col] = result[col].astype(str).str.strip()
 
@@ -30,42 +43,43 @@ def check_renewal_type(df: pd.DataFrame) -> pd.DataFrame:
     # ---------- 修改点（开始） ----------
     # 定义出口年级关键词列表（可自定义）
     exit_grades = ['高三', '初三', '六年级', '中考', '高考']
-    regular_systems = ['常规体系','A体系','B体系']
     # 构建正则表达式，实现“包含任一关键词”的模糊匹配（忽略大小写）
     pattern = '|'.join(exit_grades)
-    in_scope = result['标准部门'] != '国外考试部'
+    setup_date = pd.to_datetime(result['设班日期'], errors='coerce')
+    is_billing_system = result['产品体系'].str.contains('计费', na=False)
+    is_special_system = result['产品体系'].str.contains('专项', na=False)
+    in_scope = (
+        setup_date.ge(pd.Timestamp('2026-08-01'))
+        & (result['标准部门'] != '国外考试部')
+        & (result['班级状态'] != '取消班')
+        & ~is_billing_system
+    )
     is_exit_grade = result['年级(原)'].str.contains(
         pattern,
         case=False,
         na=False,
         regex=True,
     )
-    mask_exit = in_scope & is_exit_grade
+    is_spring_quarter = result['季度'].str.contains('春', na=False)
+    mask_exit = in_scope & is_exit_grade & is_spring_quarter
     # ---------- 修改点（结束） ----------
 
     # 1. 出口年级：若年级(原) 包含关键词，且 续班类型 != '不可续' → 异常
     mask_exit_abnormal = mask_exit & (result['续班类型'] != '不可续')
     result.loc[mask_exit_abnormal, '续班类型异常'] = 1
 
-    # 2. 非出口年级，按产品体系判断
-    not_exit = in_scope & ~is_exit_grade
+    # 2. 非“春季出口年级”，按产品体系判断
+    not_exit = in_scope & ~mask_exit
 
-    # 2.1 常规体系：续班类型 in ['可续','连季续'] 为正常，否则异常
-    mask_regular = (result['产品体系'].isin(regular_systems)) & not_exit
+    # 2.1 不含“计费”或“专项”的产品体系均按常规体系处理
+    mask_regular = (~is_billing_system & ~is_special_system) & not_exit
     regular_ok = result['续班类型'].isin(['可续', '连季续'])
     result.loc[mask_regular & ~regular_ok, '续班类型异常'] = 1
 
-    # 2.2 专项体系：续班类型 == '不可续' 为正常，否则异常
-    mask_special = (result['产品体系'] == '专项体系') & not_exit
+    # 2.2 产品体系包含“专项”：续班类型 == '不可续' 为正常，否则异常
+    mask_special = is_special_system & not_exit
     special_ok = result['续班类型'] == '不可续'
     result.loc[mask_special & ~special_ok, '续班类型异常'] = 1
-
-    # 2.3 计费体系：不判异常（不做任何操作）
-
-    # 2.4 其他未定义的产品体系：视为异常（保守），但排除已处理过的
-    defined_systems = ['常规体系', 'A体系','B体系', '专项体系', '计费体系']
-    mask_other = (~result['产品体系'].isin(defined_systems)) & not_exit
-    result.loc[mask_other, '续班类型异常'] = 1
 
     return result
 
@@ -74,8 +88,8 @@ def check_class_price(df: pd.DataFrame) -> pd.DataFrame:
     """
     检测“班级标价”是否规范。
     规则：
-      - 班级标价 == 0：标注为1
-      - 班级标价 != 0：标注为0
+      - 班级标价为空、无法解析为数字或等于0：标注为1
+      - 其他情况：标注为0
 
     参数:
         df: 需包含列 '班级标价'
@@ -85,7 +99,137 @@ def check_class_price(df: pd.DataFrame) -> pd.DataFrame:
     """
     result = df.copy()
     class_price = pd.to_numeric(result['班级标价'], errors='coerce')
-    result['班级标价规范'] = (class_price == 0).astype(int)
+    result['班级标价规范'] = (
+        class_price.isna() | class_price.eq(0)
+    ).astype(int)
+
+    return result
+
+
+def check_class_type(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    检测非国外考试部的“班级类型名称”是否为“通用”。
+
+    规则：
+      - 标准部门为'国外考试部'：不纳入质检，标注0
+      - 其他标准部门且班级类型名称 != '通用'：标注1
+      - 其他情况：标注0
+
+    参数:
+        df: 需包含列 '班级类型名称', '标准部门'
+
+    返回:
+        添加 '班级类型错误' 列（int，1表示异常，0表示正常）的DataFrame
+    """
+    result = df.copy()
+    class_type = result['班级类型名称'].astype('string').str.strip()
+    department = result['标准部门'].astype('string').str.strip()
+
+    in_scope = department.ne('国外考试部').fillna(True)
+    result['班级类型错误'] = (
+        in_scope & class_type.ne('通用').fillna(True)
+    ).astype(int)
+
+    return result
+
+
+def check_management_project_class_name(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    检测“管理项目”与“科目(外)”是否匹配。
+
+    标准部门为“国外考试部”或班级状态为“取消班”的班级不纳入检查，标注0。
+    科目为空时不因本规则判异常。科目非空时，只要命中任意异常条件，
+    “疑似非本管理项目下班级”即标注1，否则标注0。
+
+    参数:
+        df: 需包含列 '标准部门', '班级状态', '管理项目', '科目（外）'
+
+    返回:
+        添加 '疑似非本管理项目下班级' 列（int，1表示异常，0表示正常）的DataFrame
+    """
+    result = df.copy()
+    department = result['标准部门'].astype('string').str.strip()
+    class_status = result['班级状态'].astype('string').str.strip()
+    management_project = result['管理项目'].astype('string').str.strip()
+    class_name = result['科目(外)'].astype('string').str.strip()
+    in_scope = (
+        department.ne('国外考试部').fillna(True)
+        & class_status.ne('取消班').fillna(True)
+    )
+    class_name_present = class_name.notna() & class_name.ne('')
+
+    def contains_any(keywords):
+        pattern = '|'.join(re.escape(keyword) for keyword in keywords)
+        return class_name.str.contains(
+            pattern,
+            case=False,
+            na=False,
+            regex=True,
+        )
+
+    quality_keywords = [
+        '科创', '美术', '书法', '写字', '思辨', '口才', '创客','编程',
+        '围棋', '体能', '街舞', '机器人', 'C++', '图形化', 'Python','不区分'
+    ]
+    literacy_keywords = ['双语', '脑力', '思维', '博文', '妙笔']
+    hosted_learning_device_keywords = ['学习机托管', 'TG']
+    non_full_time_keywords = ['艺考', '复读', '艺体']
+    further_education_keywords = ['志愿', '升学']
+
+    has_quality_keyword = contains_any(quality_keywords)
+    has_literacy_keyword = contains_any(literacy_keywords)
+    has_hosted_learning_device_keyword = contains_any(
+        hosted_learning_device_keywords
+    )
+    has_non_full_time_keyword = contains_any(non_full_time_keywords)
+    has_further_education_keyword = contains_any(
+        further_education_keywords
+    )
+
+    quality_project_abnormal = (
+        (
+            management_project.eq('素质').fillna(False)
+            & ~has_quality_keyword
+        )
+        | (
+            management_project.ne('素质').fillna(True)
+            & has_quality_keyword
+        )
+    )
+    literacy_project_abnormal = (
+        (
+            management_project.eq('素养').fillna(False)
+            & ~has_literacy_keyword
+        )
+        | (
+            management_project.ne('素养').fillna(True)
+            & has_literacy_keyword
+        )
+    )
+    hosted_learning_device_abnormal = (
+        management_project.ne('学习机托管').fillna(True)
+        & has_hosted_learning_device_keyword
+    )
+    non_full_time_abnormal = (
+        management_project.eq('非全日制').fillna(False)
+        & has_non_full_time_keyword
+    )
+    further_education_abnormal = (
+        management_project.ne('升学规划管理').fillna(True)
+        & has_further_education_keyword
+    )
+
+    result['疑似非本管理项目下班级'] = (
+        in_scope
+        & class_name_present
+        & (
+            quality_project_abnormal
+            | literacy_project_abnormal
+            | hosted_learning_device_abnormal
+            | non_full_time_abnormal
+            | further_education_abnormal
+        )
+    ).astype(int)
 
     return result
 
@@ -363,7 +507,21 @@ def check_textbook_distribution(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def check_class_closure(df: pd.DataFrame) -> pd.DataFrame:
+def normalize_qc_month(qc_month=None) -> str:
+    """将质检月份规范为 YYYY-MM；未提供时使用系统当前月份。"""
+    if qc_month is None or str(qc_month).strip() == '':
+        return pd.Timestamp.today().strftime('%Y-%m')
+
+    value = str(qc_month).strip()
+    if not re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', value):
+        raise ValueError('质检月份格式不正确，请使用 YYYY-MM。')
+    return value
+
+
+def check_class_closure(
+    df: pd.DataFrame,
+    qc_month=None,
+) -> pd.DataFrame:
     """
     检测班级是否需要封班。
 
@@ -372,12 +530,13 @@ def check_class_closure(df: pd.DataFrame) -> pd.DataFrame:
         实际结课日期不早于当月第一天，且当前人数(占名额)为0：
         标注'0人班未封班'
       - 产品体系 == '计费体系'，且班级课次数或班级时长任一不等于1：
-        标注'计费体系课次时长异常'
+        标注'计费体系不为1次课1分钟（需确认）'
       - 其他情况保持为空
 
     参数:
         df: 需包含列 '实际开课日期', '实际结课日期',
             '当前人数(占名额)', '班级课次数', '班级时长', '产品体系'
+        qc_month: 质检月份，格式为 YYYY-MM；未提供时使用系统当前月份
 
     返回:
         添加 '封班检查' 列的DataFrame
@@ -390,8 +549,8 @@ def check_class_closure(df: pd.DataFrame) -> pd.DataFrame:
     class_count = pd.to_numeric(result['班级课次数'], errors='coerce')
     class_duration = pd.to_numeric(result['班级时长'], errors='coerce')
 
-    today = pd.Timestamp.today().normalize()
-    month_start = today.replace(day=1)
+    normalized_month = normalize_qc_month(qc_month)
+    month_start = pd.Timestamp(f'{normalized_month}-01')
     month_end = month_start + pd.offsets.MonthEnd(1)
 
     is_billing_system = product_system.eq('计费体系').fillna(False)
@@ -413,7 +572,7 @@ def check_class_closure(df: pd.DataFrame) -> pd.DataFrame:
     result.loc[
         billing_needs_closure,
         '封班检查',
-    ] = '计费体系课次时长异常'
+    ] = '计费体系不为1次课1分钟（需确认）'
 
     return result
 
@@ -565,12 +724,13 @@ def check_learning_device_online_settings(df: pd.DataFrame) -> pd.DataFrame:
     检测“学习机线上”的班级设置是否规范。
 
     规则：
+      - 班级状态为'取消班'且内外班级名称都包含'取消'：不纳入质检
       - 上课形式须为'在线'
       - 授课方式须为'在线录播'
       - 授课渠道须为'智慧学习机'
       - 考勤方式须为'班级刷卡'
-      - 上课教室非空时须包含'网络'，为空不判异常
-      - 校区名称非空时须包含'网络'，为空不判异常
+      - 上课教室不可为空且须包含'网络'
+      - 校区名称不可为空且须包含'网络'
       - 常规体系：产品品类须为'XXJ'
       - 计费体系：产品品类须包含'JF'
       - 专项体系：产品品类须包含'ZT'或'YL'
@@ -580,7 +740,8 @@ def check_learning_device_online_settings(df: pd.DataFrame) -> pd.DataFrame:
 
     参数:
         df: 需包含列 '管理项目', '产品体系', '产品品类', '上课形式',
-            '授课方式', '授课渠道', '考勤方式', '上课教室', '校区名称'
+            '授课方式', '授课渠道', '考勤方式', '上课教室', '校区名称',
+            '班级状态', '班级名称（内）', '班级名称（外）'
 
     返回:
         添加 '学习机线上班级设置规范' 列（int，1表示异常，0表示正常）的DataFrame
@@ -595,6 +756,9 @@ def check_learning_device_online_settings(df: pd.DataFrame) -> pd.DataFrame:
     attendance_method = result['考勤方式'].astype('string').str.strip()
     classroom = result['上课教室'].astype('string').str.strip()
     campus_name = result['校区名称'].astype('string').str.strip()
+    class_status = result['班级状态'].astype('string').str.strip()
+    internal_name = result['班级名称（内）'].astype('string').str.strip()
+    external_name = result['班级名称（外）'].astype('string').str.strip()
     empty_text_values = ['', 'nan', 'none', '<na>']
     classroom_empty = (
         classroom.isna() | classroom.str.lower().isin(empty_text_values)
@@ -603,14 +767,24 @@ def check_learning_device_online_settings(df: pd.DataFrame) -> pd.DataFrame:
         campus_name.isna() | campus_name.str.lower().isin(empty_text_values)
     )
 
-    in_scope = management_project.eq('学习机线上').fillna(False)
+    valid_cancelled_class = (
+        class_status.eq('取消班').fillna(False)
+        & internal_name.str.contains('取消', na=False)
+        & external_name.str.contains('取消', na=False)
+    )
+    in_scope = (
+        management_project.eq('学习机线上').fillna(False)
+        & ~valid_cancelled_class
+    )
     class_setting_valid = (
         class_format.eq('在线').fillna(False)
         & delivery_method.eq('在线录播').fillna(False)
         & delivery_channel.eq('智慧学习机').fillna(False)
         & attendance_method.eq('班级刷卡').fillna(False)
-        & (classroom_empty | classroom.str.contains('网络', na=False))
-        & (campus_name_empty | campus_name.str.contains('网络', na=False))
+        & ~classroom_empty
+        & classroom.str.contains('网络', na=False)
+        & ~campus_name_empty
+        & campus_name.str.contains('网络', na=False)
     )
     valid_product_setting = (
         (
@@ -669,7 +843,10 @@ def check_minimum_and_opening_students(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def check_teacher_and_related_class(df: pd.DataFrame) -> pd.DataFrame:
+def check_teacher_and_related_class(
+    df: pd.DataFrame,
+    qc_month=None,
+) -> pd.DataFrame:
     """
     检测“主带课老师”和“关联班号”是否异常。
     校验范围：
@@ -677,16 +854,19 @@ def check_teacher_and_related_class(df: pd.DataFrame) -> pd.DataFrame:
       - 产品体系 != '计费体系'
 
     规则：
-      - 主带课教师异常：开课日期小于等于当天、班级状态不为'取消班'、主带课老师为空时，标注1，否则标注0
+      - 未设置主带课教师：开课日期不晚于质检月份最后一天、班级状态不为'取消班'、
+        主带课老师为空时，标注1，否则标注0
       - 关联班号异常：标准部门在校验部门内、季度包含'上'或'下'、
         班级状态不为'取消班'且关联班号为空时，标注1，否则标注0
       - 不在校验范围内：两列均标注0
 
     参数:
-        df: 需包含列 '标准部门', '主带课老师', '班级状态', '开课日期', '产品体系', '关联班号', '季度'
+        df: 需包含列 '标准部门', '主带课老师', '班级状态', '开课日期',
+            '产品体系', '关联班号', '季度'
+        qc_month: 质检月份，格式为 YYYY-MM；未提供时使用系统当前月份
 
     返回:
-        添加 '主带课教师异常'、'关联班号异常' 列的DataFrame
+        添加 '未设置主带课教师'、'关联班号异常' 列的DataFrame
     """
     result = df.copy()
 
@@ -695,7 +875,9 @@ def check_teacher_and_related_class(df: pd.DataFrame) -> pd.DataFrame:
         if col in result.columns:
             result[col] = result[col].astype('string').str.strip()
 
-    today = pd.Timestamp.today().normalize()
+    normalized_month = normalize_qc_month(qc_month)
+    month_start = pd.Timestamp(f'{normalized_month}-01')
+    month_end = month_start + pd.offsets.MonthEnd(1)
     start_date = pd.to_datetime(result['开课日期'], errors='coerce')
     in_scope = (
         result['标准部门'].isin(check_departments)
@@ -704,8 +886,15 @@ def check_teacher_and_related_class(df: pd.DataFrame) -> pd.DataFrame:
     not_cancelled = result['班级状态'] != '取消班'
 
     teacher_empty = result['主带课老师'].isna() | (result['主带课老师'] == '')
-    teacher_abnormal = in_scope & (start_date <= today) & not_cancelled & teacher_empty
-    result['主带课教师异常'] = teacher_abnormal.astype(int)
+    teacher_abnormal = (
+        in_scope
+        & start_date.le(month_end)
+        & not_cancelled
+        & teacher_empty
+    )
+    if '主带课教师异常' in result.columns:
+        result = result.drop(columns=['主带课教师异常'])
+    result['未设置主带课教师'] = teacher_abnormal.astype(int)
 
     related_class_empty = result['关联班号'].isna() | (result['关联班号'] == '')
     quarter_needs_related_class = result['季度'].str.contains('上|下', na=False, regex=True)

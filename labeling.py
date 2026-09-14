@@ -28,7 +28,8 @@ def apply_classlesson_standard_department(df: pd.DataFrame) -> pd.DataFrame:
     department = result['标准部门名称']
     subject = result['科目名称']
     teaching_area = result['教学区名称']
-    result['标化部门'] = ''
+    # 未命中专门规则的部门，默认沿用原标准部门名称。
+    result['标化部门'] = department.fillna('')
 
     result.loc[department == '高中班级部', '标化部门'] = '高中班级部'
     result.loc[department == '国外考试部', '标化部门'] = '国外考试部'
@@ -76,7 +77,8 @@ def apply_standard_department(df: pd.DataFrame) -> pd.DataFrame:
        - 科目(原)in {编程, 机器人, 科创, 围棋} → '素质'
        - 其他科目 → '小学学习机'
     4. 标准部门 = 智慧学习部 → '中学学习机'
-    5. 若校区名称包含 湖南地级市名 或 '省域网络'，则覆盖上一步结果为 '创新'
+    5. 其他标准部门 → 标化部门沿用原标准部门
+    6. 若校区名称包含 湖南地级市名 或 '省域网络'，则覆盖上一步结果为 '创新'
 
     Parameters
     ----------
@@ -95,10 +97,11 @@ def apply_standard_department(df: pd.DataFrame) -> pd.DataFrame:
     str_cols = ['标准部门', '科目(原)', '校区名称']
     for col in str_cols:
         if col in result.columns:
-            result[col] = result[col].astype(str).str.strip()
+            result[col] = result[col].astype('string').str.strip()
 
     # ---------- 第一轮：按部门与科目打标签 ----------
-    result['标化部门'] = ''   # 初始化（暂时放在最后一列）
+    # 未命中专门规则的部门，默认沿用原标准部门。
+    result['标化部门'] = result['标准部门'].fillna('')
 
     # 1) 高中班级部
     mask_high = result['标准部门'] == '高中班级部'

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="班级信息与配课数据联合质检工具">
+  <title>教务数据质检中心</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 12.5 10.2 16 17.5 8.5"/></svg>
+        </span>
+        <span><strong>教务数据质检中心</strong><small>Academic Data Quality</small></span>
+      </div>
+      <div class="service-state"><span></span>服务运行中</div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <span class="eyebrow">教务数据 · 自动质检</span>
+        <h1 id="page-title">一次上传，聚焦<br><em>自己部门</em>的异常</h1>
+        <p>先选业务和负责部门：班课一次检查配课表与班级信息，高端业务只检查 PCLV 配课表。</p>
+      </div>
+      <div class="hero-guide" aria-label="操作流程">
+        <div><span>01</span><p><strong>选择业务</strong><small>班课或高端业务</small></p></div>
+        <div><span>02</span><p><strong>上传文件</strong><small>仅上传当前业务所需文件</small></p></div>
+        <div><span>03</span><p><strong>下载结果</strong><small>仅含所选部门的明细</small></p></div>
+      </div>
+    </section>
+
+    <section class="tool-card" aria-labelledby="upload-title">
+      <div class="section-heading">
+        <div>
+          <span class="step-label">01 · 设置与上传</span>
+          <h2 id="upload-title">创建一次质检任务</h2>
+        </div>
+        <p>先选择负责的业务，页面会自动切换部门范围和所需文件。</p>
+      </div>
+
+      <form id="qc-form">
+        <fieldset class="business-picker">
+          <legend>您负责的业务</legend>
+          <div class="business-options">
+            <label class="business-option" for="business-class">
+              <input type="radio" id="business-class" name="business_type" value="class">
+              <span class="business-icon" aria-hidden="true">班</span>
+              <span><strong>班课业务</strong><small>班级配课表 + 三份班级信息</small></span>
+              <i aria-hidden="true"></i>
+            </label>
+            <label class="business-option" for="business-premium">
+              <input type="radio" id="business-premium" name="business_type" value="premium">
+              <span class="business-icon" aria-hidden="true">高</span>
+              <span><strong>高端业务</strong><small>仅检查 PCLV 配课表，无需班级信息</small></span>
+              <i aria-hidden="true"></i>
+            </label>
+          </div>
+        </fieldset>
+
+        <div id="task-content" class="hidden">
+          <div class="scope-grid">
+            <div class="scope-card">
+              <span class="scope-index">A</span>
+              <label for="standard-department">质检部门</label>
+              <select id="standard-department" name="standard_department" required>
+                <option value="">请选择负责的部门</option>
+              </select>
+              <input class="hidden" type="text" id="custom-department" maxlength="50" placeholder="请输入完整部门名称">
+              <small id="department-help">班课将同时筛选班级信息和配课表；高端只筛选 PCLV。</small>
+            </div>
+
+            <div class="scope-card">
+              <span class="scope-index">B</span>
+              <label for="qc-month">质检月份</label>
+              <input type="month" id="qc-month" name="qc_month" required>
+              <small id="qc-month-scope">请选择月份，系统不会默认使用当前月。</small>
+            </div>
+          </div>
+
+          <div class="subsection-heading">
+            <div><span>文件上传</span><strong id="upload-requirement">准备所需原始数据</strong></div>
+            <p id="upload-guidance">系统将按业务类型校验配课表格式。</p>
+          </div>
+
+          <div class="upload-grid" id="upload-grid">
+            <label class="upload-box" id="schedule-box">
+              <input type="file" id="schedule" name="schedule" accept=".xlsx,.xls" required>
+              <span class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v4h14v-4"/></svg>
+              </span>
+              <span class="file-kind">配课表数据</span>
+              <strong id="schedule-upload-title">上传配课表</strong>
+              <span class="file-meta" data-placeholder="请先选择业务类型">请先选择业务类型</span>
+              <button class="select-button" type="button">选择 Excel</button>
+            </label>
+
+            <div class="classinfo-group" id="classinfo-group">
+              <div class="group-heading">
+                <div><span class="file-kind-static">班级信息</span><strong>上传三份导出文件</strong></div>
+                <span class="group-status" id="classinfo-status">0 / 3</span>
+              </div>
+
+              <label class="file-row" id="classinfo-opening-box">
+                <input type="file" id="classinfo-opening" name="classinfo_opening" accept=".csv,.xlsx,.xls">
+                <span class="row-index">01</span>
+                <span class="row-copy"><strong>本月及次月开课</strong><small data-placeholder="请选择对应 CSV 文件">请选择对应 CSV 文件</small></span>
+                <button type="button" class="row-button">选择</button>
+              </label>
+
+              <label class="file-row" id="classinfo-setup-box">
+                <input type="file" id="classinfo-setup" name="classinfo_setup" accept=".csv,.xlsx,.xls">
+                <span class="row-index">02</span>
+                <span class="row-copy"><strong>本月设班</strong><small data-placeholder="请选择对应 CSV 文件">请选择对应 CSV 文件</small></span>
+                <button type="button" class="row-button">选择</button>
+              </label>
+
+              <label class="file-row" id="classinfo-closing-box">
+                <input type="file" id="classinfo-closing" name="classinfo_closing" accept=".csv,.xlsx,.xls">
+                <span class="row-index">03</span>
+                <span class="row-copy"><strong>本月结课</strong><small data-placeholder="请选择对应 CSV 文件">请选择对应 CSV 文件</small></span>
+                <button type="button" class="row-button">选择</button>
+              </label>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <div class="privacy-note">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3m-11 0h12v10H6z"/></svg>
+              文件仅用于本次任务，下载结果按部门隔离
+            </div>
+            <button id="start-button" class="primary-button" type="submit" disabled>
+              <span>开始质检</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section id="progress-section" class="status-card progress-section hidden" aria-live="polite">
+      <div class="progress-copy">
+        <span class="status-icon spinner" aria-hidden="true"></span>
+        <p><strong id="progress-title">正在读取并质检文件</strong><small id="progress-detail">文件较大时可能需要几十秒，请保持页面打开。</small></p>
+      </div>
+      <div class="progress-track"><span></span></div>
+    </section>
+
+    <section id="error-section" class="status-card error-section hidden" role="alert">
+      <span class="status-icon">!</span>
+      <p><strong>质检未完成</strong><small id="error-message"></small></p>
+    </section>
+
+    <section id="result-section" class="result-section hidden" aria-labelledby="result-title">
+      <div class="result-heading">
+        <div>
+          <span class="step-label">02 · 结果概览</span>
+          <h2 id="result-title">部门质检结果</h2>
+          <p id="result-subtitle">以下统计和下载明细均已按部门筛选。</p>
+        </div>
+        <a id="download-button" class="download-button" href="#" download>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+          <span id="download-label">下载部门质检结果</span>
+        </a>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric featured"><span>质检部门</span><strong id="department-result">—</strong><small>本次统一数据范围</small></article>
+        <article class="metric"><span>班级信息</span><strong id="classinfo-total">0</strong><small id="classinfo-abnormal">0 条异常</small></article>
+        <article class="metric"><span>配课表数据</span><strong id="schedule-total">0</strong><small id="schedule-abnormal">0 条异常</small></article>
+        <article class="metric"><span>质检月份</span><strong id="qc-month-result">—</strong><small><span id="schedule-type">—</span> · <span id="completed-time">已完成</span></small></article>
+      </div>
+
+      <div class="result-layout">
+        <section class="summary-panel">
+          <div class="panel-heading"><div><span>DATA OVERVIEW</span><h3>部门数据概览</h3></div><small>总记录 / 异常记录</small></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>数据类型</th><th>标化部门</th><th>总记录数</th><th>异常记录数</th><th>异常率</th></tr></thead>
+              <tbody id="summary-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="rule-panel">
+          <div class="panel-heading"><div><span>ISSUES</span><h3>异常规则分布</h3></div><small>按命中数排序</small></div>
+          <div id="rule-list" class="rule-list"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>教务数据质检中心 · 上传文件与结果按任务独立保存</footer>
+  <script src="/app.js" defer></script>
+</body>
+</html>
