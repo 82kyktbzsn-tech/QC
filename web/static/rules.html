@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="教务数据质检中心规则覆盖范围">
+  <title>规则范围 · 教务数据质检中心</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="doc-page">
+  <header class="site-header">
+    <div class="topbar">
+      <a class="brand" href="/" aria-label="返回质检工具">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 12.5 10.2 16 17.5 8.5"/></svg></span>
+        <span><strong>教务数据质检中心</strong><small>Academic Data Quality</small></span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">质检工具</a>
+        <a href="/guide.html">使用说明</a>
+        <a class="active" href="/rules.html">规则范围</a>
+      </nav>
+      <div class="service-state"><span></span>规则文档</div>
+    </div>
+  </header>
+
+  <section class="doc-hero">
+    <div class="doc-hero-inner">
+      <span class="eyebrow">RULE COVERAGE · 规则覆盖范围</span>
+      <h1>当前系统实际执行的质检规则</h1>
+      <p>以下内容依据当前代码整理，说明每项规则的检查字段、异常条件和豁免范围。规则调整后应同步更新本页。</p>
+      <div class="rule-summary">
+        <div><strong>21</strong><span>班级信息自动规则</span></div>
+        <div><strong>9</strong><span>班级配课表自动规则</span></div>
+        <div><strong>4</strong><span>PCLV 自动规则</span></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="doc-layout">
+    <aside class="doc-toc" aria-label="页面目录">
+      <strong>规则目录</strong>
+      <a href="#boundary">覆盖边界</a>
+      <a href="#department">部门标化</a>
+      <a href="#classinfo">班级信息规则</a>
+      <a href="#classlesson">班级配课表规则</a>
+      <a href="#pclv">PCLV 高端规则</a>
+      <a href="#manual">人工核对项</a>
+    </aside>
+
+    <article class="doc-content">
+      <section class="doc-section" id="boundary">
+        <span class="doc-kicker">00 · COVERAGE BOUNDARY</span>
+        <h2>覆盖边界</h2>
+        <p>班课业务执行班级信息与 classlesson 配课表规则；高端业务只执行 PCLV 配课表规则。页面选择的部门会在规则执行后筛选结果。</p>
+        <div class="notice"><strong>当前未独立覆盖：</strong>“产品体系匹配准确性”和“产品品类准确性”没有作为通用规则自动判断。仅在学习机相关专项规则中，对产品体系与产品品类的特定组合进行检查。</div>
+        <p>“部门组合核对”属于人工复核清单，不计入异常统计。系统标注结果用于定位疑点，不能替代业务人员对特殊场景的最终判断。</p>
+      </section>
+
+      <section class="doc-section" id="department">
+        <span class="doc-kicker">01 · DEPARTMENT STANDARDIZATION</span>
+        <h2>部门标化与筛选口径</h2>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <span class="tag">班级信息 / classlesson</span>
+            <h3>使用统一标化规则</h3>
+            <p>高中班级部、国外考试部保持原值；智慧学习部标为中学学习机；素养智学部中，博文妙笔/脑力与思维/书法/双语故事表演标为素养，编程/机器人/科创/围棋标为素质，其他科目标为小学学习机；其他部门沿用标准部门。校区含湖南地级市名或“省域网络”时覆盖为创新。</p>
+          </div>
+          <div class="doc-card">
+            <span class="tag">PCLV</span>
+            <h3>不做二次映射</h3>
+            <p>“标化部门”直接等于 PCLV 的“标准部门名称”。当前示例数据包含高中一对一部、国外考试部、素养智学部。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="classinfo">
+        <span class="doc-kicker">02 · CLASSINFO</span>
+        <h2>班级信息质检：21 项</h2>
+        <p>以下规则仅在班课业务执行。表内“豁免/范围”未列出的记录默认纳入检查。</p>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>#</th><th>结果字段</th><th>主要字段</th><th>异常判定</th><th>豁免 / 范围</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>续班类型异常</td><td>设班日期、标准部门、班级状态、产品体系、年级(原)、季度、续班类型</td><td>春季出口年级应为“不可续”；专项体系应为“不可续”；既不含“计费”也不含“专项”的常规体系应为“可续”或“连季续”。</td><td>仅检查设班日期≥2026-08-01；国外考试部、取消班、产品体系含“计费”不检查。</td></tr>
+              <tr><td>2</td><td>班级标价规范</td><td>班级标价</td><td>为空、无法转为数字或等于0时异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>3</td><td>未设置主带课教师</td><td>标准部门、产品体系、班级状态、开课日期、主带课老师</td><td>开课日期不晚于质检月份最后一天，且主带课老师为空时异常。</td><td>仅智慧学习部、素养智学部、高中班级部；计费体系和取消班不检查。</td></tr>
+              <tr><td>4</td><td>关联班号异常</td><td>标准部门、产品体系、班级状态、季度、关联班号</td><td>季度含“上”或“下”且关联班号为空时异常。</td><td>仅智慧学习部、素养智学部、高中班级部；计费体系和取消班不检查。</td></tr>
+              <tr><td>5</td><td>审核状态异常</td><td>班级审核状态</td><td>不等于“已审核”，包括为空，均异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>6</td><td>季度与开课日期不符</td><td>季度(外)、开课日期、标准部门</td><td>暑季应在6–8月；秋季9–11月；寒季12月或1–2月；春季3–5月。未匹配对应月份时异常。</td><td>国外考试部不检查。</td></tr>
+              <tr><td>7</td><td>上课形式&amp;授课方式&amp;授课渠道异常</td><td>上课形式、授课方式、授课渠道</td><td>在线须为在线直播/录播且渠道非空；走读须为常规面授且渠道为空；在线+走读须同时含面授和直播/录播且渠道非空。</td><td>无额外豁免。</td></tr>
+              <tr><td>8</td><td>取消班状态异常</td><td>班级状态、班级名称（内/外）、最大人数</td><td>取消班须内外名称均含“取消”且最大人数为0；非取消班的内外名称均不得含“取消”。</td><td>无额外豁免。</td></tr>
+              <tr><td>9</td><td>设班时间晚于开课时间</td><td>设班日期、开课日期</td><td>设班日期晚于开课日期，或任一日期无法识别时异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>10</td><td>实际开课日期不早于开课日期当月</td><td>实际开课日期、开课日期、班级状态</td><td>实际开课日期与开课日期不在同年同月，或日期为空/无法识别时异常。</td><td>取消班不检查。</td></tr>
+              <tr><td>11</td><td>上课时间（外）未填写</td><td>上课时间(外)、班级时长</td><td>上课时间(外)为空时异常。</td><td>班级时长为1的记录不检查。</td></tr>
+              <tr><td>12</td><td>教材发放形式填写错误</td><td>教材发放形式、产品体系</td><td>教材发放形式为空时异常。</td><td>产品体系等于“计费体系”不检查。</td></tr>
+              <tr><td>13</td><td>封班检查</td><td>产品体系、实际开/结课日期、当前人数、班级课次数、班级时长</td><td>非计费体系在质检月内有效且当前人数为0，标记“0人班未封班”；计费体系课次数或时长不为1，标记“计费体系不为1次课1分钟（需确认）”。</td><td>0人班月份范围使用页面选择月份的首日和末日。</td></tr>
+              <tr><td>14</td><td>最小发薪部门为空</td><td>最小发薪部门</td><td>字段为空时异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>15</td><td>班级时长&amp;实际时长异常</td><td>班级时长、实际时长</td><td>任一字段为空、为0或无法转为数字时异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>16</td><td>未设置上课地点/上课教室</td><td>上课地点(外)、上课教室、班级状态、产品体系、开课日期</td><td>上课地点(外)或上课教室任一为空时异常。</td><td>取消班、计费体系、开课日期晚于系统当天的班级不检查。</td></tr>
+              <tr><td>17</td><td>一卡通设置错误</td><td>产品体系、班容名称、考勤方式</td><td>计费体系应“不使用一卡通”；非计费1人班应“VIP刷卡”；非计费2人及以上应“班级刷卡”。</td><td>班容无法识别为人数时无法满足有效组合，会判异常。</td></tr>
+              <tr><td>18</td><td>学习机线上班级设置规范</td><td>管理项目、产品体系、产品品类、上课形式/方式/渠道、考勤方式、教室、校区</td><td>学习机线上须：在线、在线录播、智慧学习机、班级刷卡，教室和校区均含“网络”；产品体系与品类须满足 XXJ/JF/ZT或YL/A/B/C 对应关系。</td><td>仅管理项目为“学习机线上”；状态为取消班且内外名称均含“取消”的有效取消班不检查。</td></tr>
+              <tr><td>19</td><td>开班保底人数</td><td>开班人数、保底人数</td><td>保底人数大于开班人数，或数值无法正常比较时异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>20</td><td>班级类型错误</td><td>班级类型名称、标准部门</td><td>班级类型名称不等于“通用”，包括为空，均异常。</td><td>国外考试部不检查。</td></tr>
+              <tr><td>21</td><td>疑似非本管理项目下班级</td><td>管理项目、科目(外)、标准部门、班级状态</td><td>按科目关键词核对素质、素养、学习机托管、非全日制、升学规划管理等管理项目，命中不一致条件时异常。</td><td>国外考试部、取消班、科目(外)为空不检查。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="notice"><strong>“疑似非本管理项目下班级”的当前关键词口径：</strong>素质类包括科创、美术、书法、写字、思辨、口才、创客、编程、围棋、体能、街舞、机器人、C++、图形化、Python、不区分；素养类包括双语、脑力、思维、博文、妙笔；学习机托管类包括“学习机托管、TG”；非全日制类包括艺考、复读、艺体；升学规划类包括志愿、升学。系统依据这些关键词与管理项目组合判断疑似不匹配。</div>
+      </section>
+
+      <section class="doc-section" id="classlesson">
+        <span class="doc-kicker">03 · CLASSLESSON</span>
+        <h2>班级配课表质检：9 项</h2>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>#</th><th>结果字段</th><th>主要字段</th><th>异常判定</th><th>豁免 / 范围</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>异常时间排课</td><td>起始时间、结束时间</td><td>开始早于06:00或结束晚于22:00时异常。</td><td>边界06:00和22:00允许。</td></tr>
+              <tr><td>2</td><td>教师考勤异常</td><td>使用一卡通、教师打卡状态、分钟数、部门及课程信息</td><td>使用一卡通为班级刷卡/班级打卡，教师状态为空或“未打卡”时异常。</td><td>1分钟课次豁免；国外考试部的自习、模课、模考豁免教师考勤。</td></tr>
+              <tr><td>3</td><td>学员考勤异常</td><td>使用一卡通、学员打卡状态、分钟数</td><td>使用一卡通为班级刷卡/班级打卡，学员状态为空或“未打卡”时异常。</td><td>1分钟课次豁免。</td></tr>
+              <tr><td>4</td><td>0人班处理</td><td>当前人数（占名额）</td><td>当前人数等于0时异常。</td><td>无额外豁免。</td></tr>
+              <tr><td>5</td><td>配课表审核时效异常</td><td>审核状态</td><td>只有“已审核”正常；其他值或为空均异常。</td><td>所有记录均检查。</td></tr>
+              <tr><td>6</td><td>授课内容类型异常</td><td>课程名称、授课内容类型</td><td>类型不可为空；训练/辅导/带练应为辅导课；模考应为测评课；自习应为自习课；正课名称不得含其他类型关键词。</td><td>按上述顺序判断并保留优先级最高的异常原因。</td></tr>
+              <tr><td>7</td><td>课程字段完整性异常</td><td>课程名称、教室名称、教师、分钟数、产品体系、标准部门</td><td>课程名称、教室名称、教师任一为空时异常，并列出缺失字段。</td><td>1分钟、计费体系、国外考试部且课程名含自习或模考的课次不检查。</td></tr>
+              <tr><td>8</td><td>学习机-授课方式标识异常</td><td>授课方式标识、产品体系、产品品类、内容类型、教室</td><td>智慧学习机课次须满足：常规体系=XXJ，A/B体系对应含A/B的品类；内容类型=答疑课；教室名称含“网络”。</td><td>仅授课方式标识为“智慧学习机”的课次。</td></tr>
+              <tr><td>9</td><td>上课日期不早于开课日期当月</td><td>课次、日期、开课日期</td><td>课次1的上课日期与开课日期必须在同年同月；为空、无法识别或年月不同均异常。</td><td>仅课次=1。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="pclv">
+        <span class="doc-kicker">04 · PCLV</span>
+        <h2>高端配课表质检：4 项</h2>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>#</th><th>结果字段</th><th>主要字段</th><th>异常判定</th><th>范围</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>异常时间排课</td><td>课次时间</td><td>解析开始、结束时间；开始早于06:00、结束晚于22:00、为空或无法解析时异常。</td><td>支持“-、—、–、~、至”等时间分隔符；边界时间允许。</td></tr>
+              <tr><td>2</td><td>教师考勤异常</td><td>教师考勤</td><td>字段为空或等于“未打卡”时异常。</td><td>所有记录检查，无1分钟等额外豁免。</td></tr>
+              <tr><td>3</td><td>学员考勤异常</td><td>学员考勤</td><td>字段为空或等于“未打卡”时异常。</td><td>所有记录检查。</td></tr>
+              <tr><td>4</td><td>配课表审核时效异常</td><td>审核状态</td><td>只有“已审核”正常；为空或其他状态均异常。</td><td>所有记录检查。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="manual">
+        <span class="doc-kicker">05 · MANUAL REVIEW</span>
+        <h2>标准部门与管理部门组合核对</h2>
+        <p>班级配课表和 PCLV 都会生成“部门组合核对”Sheet。系统汇总管理部门与标准部门的全部去重组合，并提供对应课次记录数、核对结论和备注栏。</p>
+        <div class="notice"><strong>注意：</strong>目前没有可以自动判断正误的完整映射标准，因此默认结论为“待核对”，由各部门自行确认；该清单不计入异常数量和异常率。</div>
+        <div class="page-actions">
+          <a href="/">返回质检工具</a>
+          <a class="secondary" href="/guide.html">查看产品使用说明</a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer>教务数据质检中心 · 当前规则覆盖范围</footer>
+</body>
+</html>

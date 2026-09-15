@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="教务数据质检中心产品使用说明">
+  <title>使用说明 · 教务数据质检中心</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="doc-page">
+  <header class="site-header">
+    <div class="topbar">
+      <a class="brand" href="/" aria-label="返回质检工具">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 12.5 10.2 16 17.5 8.5"/></svg></span>
+        <span><strong>教务数据质检中心</strong><small>Academic Data Quality</small></span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="/">质检工具</a>
+        <a class="active" href="/guide.html">使用说明</a>
+        <a href="/rules.html">规则范围</a>
+      </nav>
+      <div class="service-state"><span></span>使用文档</div>
+    </div>
+  </header>
+
+  <section class="doc-hero">
+    <div class="doc-hero-inner">
+      <span class="eyebrow">PRODUCT GUIDE · 产品使用说明</span>
+      <h1>从原始文件到部门质检结果</h1>
+      <p>本工具面向教务数据质检人员。选择业务、部门和月份后，系统自动识别文件、执行对应规则，并导出仅包含所选部门的数据。</p>
+    </div>
+  </section>
+
+  <main class="doc-layout">
+    <aside class="doc-toc" aria-label="页面目录">
+      <strong>本页目录</strong>
+      <a href="#positioning">工具定位</a>
+      <a href="#prepare">上传前准备</a>
+      <a href="#steps">操作步骤</a>
+      <a href="#month">月份与部门</a>
+      <a href="#output">结果与导出</a>
+      <a href="#errors">常见问题</a>
+    </aside>
+
+    <article class="doc-content">
+      <section class="doc-section" id="positioning">
+        <span class="doc-kicker">01 · WHAT IT DOES</span>
+        <h2>工具定位</h2>
+        <p>系统按业务类型决定质检范围。部门只需选择一次，不需要为班级信息和配课表重复选择。</p>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <span class="tag">班课业务</span>
+            <h3>班级信息 + 班级配课表</h3>
+            <p>上传三份班级信息和一份 classlesson 班级配课表。所选部门同时用于两类数据的筛选与导出。</p>
+          </div>
+          <div class="doc-card">
+            <span class="tag">高端业务</span>
+            <h3>仅 PCLV 高端配课表</h3>
+            <p>不上传、不检查班级信息。PCLV 的标化部门直接采用原表“标准部门名称”。</p>
+          </div>
+        </div>
+        <div class="notice">本工具用于发现疑似异常。涉及部门对应关系的内容会生成“部门组合核对”清单，由业务人员人工确认，不会直接计入异常。</div>
+      </section>
+
+      <section class="doc-section" id="prepare">
+        <span class="doc-kicker">02 · FILE CHECKLIST</span>
+        <h2>上传前准备</h2>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>业务</th><th>文件</th><th>格式</th><th>要求</th></tr></thead>
+            <tbody>
+              <tr><td>班</td><td>班级配课表</td><td>.xlsx / .xls</td><td>必须为 classlesson 字段结构，不能上传 PCLV。</td></tr>
+              <tr><td>班</td><td>本月及次月开课</td><td>.csv / .xlsx / .xls</td><td>三份班级信息的列名和列顺序必须一致。</td></tr>
+              <tr><td>班</td><td>本月设班</td><td>.csv / .xlsx / .xls</td><td>系统自动合并为固定 Sheet，无需用户手工合并。</td></tr>
+              <tr><td>班</td><td>本月结课</td><td>.csv / .xlsx / .xls</td><td>CSV 可自动兼容 UTF-8、UTF-8 BOM、GB18030 编码。</td></tr>
+              <tr><td>高</td><td>PCLV 高端配课表</td><td>.xlsx / .xls</td><td>必须包含 PCLV 字段结构；无需任何班级信息文件。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>单次上传内容总大小不得超过 80 MB。建议直接使用系统导出的原始文件，不要自行删除列、修改表头或合并单元格。</p>
+      </section>
+
+      <section class="doc-section" id="steps">
+        <span class="doc-kicker">03 · QUICK START</span>
+        <h2>操作步骤</h2>
+        <div class="step-list">
+          <div class="step-item"><strong>选择业务类型</strong><p>选择“班课业务”或“高端业务”，页面会自动切换部门范围和文件入口。</p></div>
+          <div class="step-item"><strong>确认质检部门</strong><p>部门只选一次。班课同时应用于班级信息和配课表；高端只应用于 PCLV。</p></div>
+          <div class="step-item"><strong>确认质检月份</strong><p>默认显示电脑系统当前月份，也可手动改为历史月份或下月。</p></div>
+          <div class="step-item"><strong>上传原始文件</strong><p>班课上传四份文件，高端只上传一份 PCLV。支持点击选择和拖拽上传。</p></div>
+          <div class="step-item"><strong>开始质检</strong><p>按钮点亮后提交任务。文件较大时可能需要几十秒，请保持页面打开。</p></div>
+          <div class="step-item"><strong>查看并下载结果</strong><p>页面展示记录数、异常数和规则分布；下载 Excel 查看逐行异常反馈。</p></div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="month">
+        <span class="doc-kicker">04 · SCOPE</span>
+        <h2>月份与部门如何生效</h2>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <h3>质检部门</h3>
+            <p>班课部门按系统生成的“标化部门”筛选；高端部门按 PCLV 的“标准部门名称”筛选。选择“全部部门”时保留全部数据。</p>
+          </div>
+          <div class="doc-card">
+            <h3>质检月份</h3>
+            <p>月份用于班级信息中的0人班封班范围，以及“未设置主带课教师”的已开课判断。最终以输入框显示的 YYYY-MM 为准。</p>
+          </div>
+        </div>
+        <p>例如选择 <strong>2026-08</strong>：0人班检查使用 2026-08-01 至 2026-08-31；主带课教师检查将开课日期不晚于 2026-08-31 的班级视为已开课范围。</p>
+      </section>
+
+      <section class="doc-section" id="output">
+        <span class="doc-kicker">05 · OUTPUT</span>
+        <h2>结果文件说明</h2>
+        <ul>
+          <li><strong>质检参数：</strong>记录业务类型、质检月份和质检部门。</li>
+          <li><strong>部门汇总：</strong>展示班级信息、配课表的总记录数、异常记录数和异常率。</li>
+          <li><strong>班级信息质检：</strong>仅班课业务生成。</li>
+          <li><strong>配课质检-classlesson：</strong>班课业务生成。</li>
+          <li><strong>配课质检-pclv：</strong>高端业务生成。</li>
+          <li><strong>部门组合核对：</strong>列出管理部门与标准部门组合，供人工确认。</li>
+        </ul>
+        <p>明细表首列“质检结果反馈”汇总该行命中的全部异常，多个异常用“+”连接，并使用黄色底、红色加粗字体突出显示。规则列中通常以 <strong>1</strong> 表示异常、<strong>0</strong> 表示正常。</p>
+      </section>
+
+      <section class="doc-section" id="errors">
+        <span class="doc-kicker">06 · TROUBLESHOOTING</span>
+        <h2>常见问题</h2>
+        <div class="doc-grid">
+          <div class="doc-card"><h3>无法识别配课表类型</h3><p>检查是否选择了正确业务，以及文件是否保留原始表头。班课只能上传 classlesson，高端只能上传 PCLV。</p></div>
+          <div class="doc-card"><h3>所选部门不存在</h3><p>说明上传文件经标化后没有该部门。核对部门选择、原表“标准部门”或“标准部门名称”。</p></div>
+          <div class="doc-card"><h3>三份班级信息无法合并</h3><p>确认三份文件均已上传，并且列名、列数和列顺序完全一致。</p></div>
+          <div class="doc-card"><h3>历史月份仍按当前月判断</h3><p>先确认页面月份显示正确。导出的“质检参数”Sheet 会记录本次真正使用的月份。</p></div>
+        </div>
+        <div class="page-actions">
+          <a href="/">开始质检</a>
+          <a class="secondary" href="/rules.html">查看完整规则范围</a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer>教务数据质检中心 · 产品使用说明</footer>
+</body>
+</html>
