@@ -214,6 +214,12 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 .subsection-heading p { margin: 0; color: var(--muted); font-size: 11px; }
 
 .upload-grid { display: grid; grid-template-columns: minmax(0,.82fr) minmax(0,1.18fr); gap: 14px; }
+.resource-links { display: flex; align-items: stretch; gap: 9px; margin: -3px 0 14px; flex-wrap: wrap; }
+.resource-label { display: flex; align-items: center; padding: 0 4px 0 1px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.resource-links a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: #fff; text-decoration: none; transition: .18s ease; }
+.resource-links a:hover { border-color: #a8baf0; color: var(--blue); background: var(--blue-soft); }
+.resource-links a span { font-size: 13px; font-weight: 700; }
+.resource-links a small { color: var(--muted); font-size: 11px; }
 .upload-grid.premium-only { grid-template-columns: 1fr; }
 .upload-grid.premium-only .upload-box { min-height: 230px; }
 .upload-box, .classinfo-group { min-height: 246px; border: 1px solid var(--line); border-radius: 15px; background: #fbfcff; }

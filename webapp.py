@@ -23,6 +23,7 @@ from qc_service import (
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / 'web' / 'static'
 JOBS_DIR = BASE_DIR / 'runtime' / 'jobs'
+QC_RULES_FILE = BASE_DIR / '产品说明书' / '长沙学校数据质检规则-2026.9.xlsx'
 MAX_UPLOAD_BYTES = 80 * 1024 * 1024
 
 
@@ -43,6 +44,9 @@ class QCRequestHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/api/health':
             self._send_json({'status': 'ok', 'time': datetime.now().isoformat()})
+            return
+        if path == '/api/files/qc-rules':
+            self._download_qc_rules()
             return
         if path.startswith('/api/jobs/') and path.endswith('/download'):
             self._download_job(path)
@@ -238,6 +242,25 @@ class QCRequestHandler(SimpleHTTPRequestHandler):
         self.send_header(
             'Content-Disposition',
             f"attachment; filename*=UTF-8''{quote(download_name)}",
+        )
+        self.send_header('Content-Length', str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def _download_qc_rules(self):
+        if not QC_RULES_FILE.is_file():
+            self.send_error(HTTPStatus.NOT_FOUND, '质检规则文件不存在')
+            return
+
+        payload = QC_RULES_FILE.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.send_header(
+            'Content-Disposition',
+            f"attachment; filename*=UTF-8''{quote(QC_RULES_FILE.name)}",
         )
         self.send_header('Content-Length', str(len(payload)))
         self.end_headers()

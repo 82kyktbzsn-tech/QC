@@ -96,6 +96,12 @@ function refreshBusinessSelection() {
   scheduleInput.value = '';
 
   const isPremium = businessType === 'premium';
+  document.querySelectorAll('.class-resource').forEach(link => {
+    link.classList.toggle('hidden', isPremium);
+  });
+  document.querySelectorAll('.premium-resource').forEach(link => {
+    link.classList.toggle('hidden', !isPremium);
+  });
   classinfoGroup.classList.toggle('hidden', isPremium);
   uploadGrid.classList.toggle('premium-only', isPremium);
   classinfoInputs.forEach(input => { input.required = !isPremium; });
