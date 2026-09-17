@@ -1,0 +1,83 @@
+{% extends "shared/base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('personalized.static', filename='css/academic_data_qc.css') }}">
+{% endblock %}
+
+{% block content %}
+{% include 'shared/navbar.html' %}
+<main id="academic-data-qc" class="academic-data-qc">
+  <header class="qc-hero">
+    <p class="qc-eyebrow">教务数据 · 自动质检</p>
+    <h1>{{ tool_name }}</h1>
+    <p>上传班级信息与配课数据，按业务和部门执行既有质检规则。</p>
+  </header>
+
+  <section class="qc-card" aria-labelledby="qc-form-title">
+    <h2 id="qc-form-title">创建质检任务</h2>
+    <form id="qc-form" enctype="multipart/form-data">
+      <div class="qc-grid">
+        <label>
+          <span>业务类型</span>
+          <select id="business-type" name="business_type" required>
+            <option value="">请选择</option>
+            <option value="class">班课业务</option>
+            <option value="premium">高端业务</option>
+          </select>
+        </label>
+        <label>
+          <span>质检部门</span>
+          <input id="standard-department" name="standard_department" required placeholder="例如：素养">
+        </label>
+        <label>
+          <span>质检月份</span>
+          <input id="qc-month" name="qc_month" type="month" required>
+        </label>
+      </div>
+
+      <div class="qc-upload-grid">
+        <label>
+          <span>配课表</span>
+          <input id="schedule" name="schedule" type="file" accept=".xlsx,.xls" required>
+        </label>
+        <label class="classinfo-file">
+          <span>本月及次月开课</span>
+          <input id="classinfo-opening" name="classinfo_opening" type="file" accept=".csv,.xlsx,.xls">
+        </label>
+        <label class="classinfo-file">
+          <span>本月设班</span>
+          <input id="classinfo-setup" name="classinfo_setup" type="file" accept=".csv,.xlsx,.xls">
+        </label>
+        <label class="classinfo-file">
+          <span>本月结课</span>
+          <input id="classinfo-closing" name="classinfo_closing" type="file" accept=".csv,.xlsx,.xls">
+        </label>
+      </div>
+
+      <button id="start-button" type="submit">开始质检</button>
+      <p id="error-message" class="qc-error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <section id="result-section" class="qc-card" aria-labelledby="result-title" hidden>
+    <div class="qc-result-heading">
+      <div>
+        <p class="qc-eyebrow">质检结果</p>
+        <h2 id="result-title">任务结果</h2>
+      </div>
+      <a id="download-button" href="#" download>下载 Excel</a>
+    </div>
+    <div id="result-summary" class="qc-summary"></div>
+  </section>
+
+  <section class="qc-card">
+    <h2>历史任务</h2>
+    <p id="history-message" class="qc-muted">正在读取权威数据……</p>
+    <div id="history-list" class="qc-history"></div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('personalized.static', filename='js/academic_data_qc.js') }}" defer></script>
+{% endblock %}

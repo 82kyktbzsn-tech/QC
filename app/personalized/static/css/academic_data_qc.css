@@ -1,0 +1,136 @@
+.academic-data-qc {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  color: #183b4e;
+}
+
+.academic-data-qc .qc-hero {
+  margin-bottom: 24px;
+}
+
+.academic-data-qc .qc-eyebrow {
+  margin: 0 0 8px;
+  color: #2c7a7b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.academic-data-qc h1,
+.academic-data-qc h2 {
+  margin: 0;
+}
+
+.academic-data-qc h1 {
+  font-size: clamp(28px, 4vw, 44px);
+}
+
+.academic-data-qc .qc-hero > p:last-child {
+  max-width: 640px;
+  color: #58717d;
+}
+
+.academic-data-qc .qc-card {
+  margin-top: 20px;
+  padding: 24px;
+  border: 1px solid #d8e4e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(24 59 78 / 8%);
+}
+
+.academic-data-qc .qc-grid,
+.academic-data-qc .qc-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.academic-data-qc .qc-upload-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.academic-data-qc label {
+  display: grid;
+  gap: 8px;
+  color: #395765;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.academic-data-qc input,
+.academic-data-qc select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #c8d8de;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.academic-data-qc button,
+.academic-data-qc #download-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  margin-top: 20px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #183b4e;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.academic-data-qc .qc-error {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.academic-data-qc .qc-result-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.academic-data-qc .qc-result-heading #download-button {
+  margin-top: 0;
+}
+
+.academic-data-qc .qc-summary,
+.academic-data-qc .qc-history {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.academic-data-qc .qc-summary-item,
+.academic-data-qc .qc-history-item {
+  padding: 12px 14px;
+  border: 1px solid #e2ecef;
+  border-radius: 8px;
+  background: #f7fbfc;
+}
+
+.academic-data-qc .qc-muted {
+  color: #58717d;
+}
+
+@media (max-width: 760px) {
+  .academic-data-qc .qc-grid,
+  .academic-data-qc .qc-upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .academic-data-qc .qc-result-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
